@@ -8,6 +8,7 @@ exports.__esModule = true;
 var core_1 = require("@popscript/core");
 var PATH = require("path");
 var FS = require("fs");
+var Chokidar = require("chokidar");
 var CLI = /** @class */ (function () {
     function CLI() {
         this.arguments = process.argv.slice(2);
@@ -22,7 +23,15 @@ var CLI = /** @class */ (function () {
             FS.exists(PATH.join(this.folder, input_1), function (bool) {
                 if (!bool)
                     throw new Error('File specified does not exist!');
-                new core_1["default"]().file(PATH.join(_this.folder, input_1));
+                if (_this.arguments.filter(function (x) { return ['--watch', '-watch', '--w', '-w'].includes(x); }).length > 0) {
+                    var listener = Chokidar.watch(PATH.join(_this.folder, PATH.dirname(input_1)), {});
+                    listener.on('change', function (path) {
+                        new core_1["default"]().file(path);
+                    });
+                }
+                else {
+                    new core_1["default"]().file(PATH.join(_this.folder, input_1));
+                }
             });
         }
     };

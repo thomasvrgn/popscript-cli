@@ -7,6 +7,7 @@
 import Popscript from '@popscript/core'
 import * as PATH from 'path'
 import * as FS   from 'fs'
+import * as Chokidar from 'chokidar'
 
 export default class CLI {
 
@@ -24,7 +25,14 @@ export default class CLI {
             
             FS.exists(PATH.join(this.folder, input), bool => {
                 if (!bool) throw new Error('File specified does not exist!')
-                new Popscript().file(PATH.join(this.folder, input))
+                if (this.arguments.filter(x => ['--watch', '-watch', '--w', '-w'].includes(x)).length > 0) {
+                    const listener = Chokidar.watch(PATH.join(this.folder, PATH.dirname(input)), {})
+                    listener.on('change', path => {
+                        new Popscript().file(path)
+                    })
+                } else {
+                    new Popscript().file(PATH.join(this.folder, input))
+                }
             })
             
         }
