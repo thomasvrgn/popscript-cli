@@ -9,6 +9,7 @@ import * as PATH     from 'path'
 import * as FS       from 'fs'
 import * as Chokidar from 'chokidar'
 import * as Prompt   from 'prompt-improved'
+import * as Chalk    from 'chalk'
 
 export default class CLI {
 
@@ -22,12 +23,13 @@ export default class CLI {
         const prompt = new Prompt({
             prefix: '>>>',
             suffix: '',
-            prefixTheme: Prompt.chalk.green
+            prefixTheme: Prompt.chalk.grey
         })
         
         prompt.ask('', (err, res) => {
             if (err) return console.error(err)
-            new Popscript().text(res)
+            process.stdout.write(Chalk.grey('Output: '))
+            new Popscript().text(res, () => {})
             this.input()
         })
 
@@ -44,11 +46,25 @@ export default class CLI {
                 if (!bool) throw new Error('File specified does not exist!')
                 if (this.arguments.filter(x => ['--watch', '-watch', '--w', '-w'].includes(x)).length > 0) {
                     const listener = Chokidar.watch(PATH.join(this.folder, PATH.dirname(input)), {})
+                    const date     = new Date()
+                    console.log('[' + Chalk.grey(date.getHours() + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript watch mode started on ' + Chalk.grey(PATH.basename(input)) + '.')
                     listener.on('change', path => {
-                        new Popscript().file(path)
+                        const date = new Date()
+                        console.log('[' + Chalk.grey(Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()))  + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution started in watch mode...')
+                        process.stdout.write(Chalk.grey('Output: '))
+                        new Popscript().file(path, () => {
+                            const date = new Date()
+                            console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution finished.\n')
+                        })
                     })
                 } else {
-                    new Popscript().file(PATH.join(this.folder, input))
+                    const date = new Date()
+                    console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + date.getSeconds()) + '] Popscript execution started...')
+                    process.stdout.write(Chalk.grey('Output: '))
+                    new Popscript().file(PATH.join(this.folder, input), () => {
+                        const date = new Date()
+                        console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution finished.\n')
+                    })
                 }
             })
             

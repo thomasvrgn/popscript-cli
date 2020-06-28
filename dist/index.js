@@ -10,6 +10,7 @@ var PATH = require("path");
 var FS = require("fs");
 var Chokidar = require("chokidar");
 var Prompt = require("prompt-improved");
+var Chalk = require("chalk");
 var CLI = /** @class */ (function () {
     function CLI() {
         this.arguments = process.argv.slice(2);
@@ -20,12 +21,13 @@ var CLI = /** @class */ (function () {
         var prompt = new Prompt({
             prefix: '>>>',
             suffix: '',
-            prefixTheme: Prompt.chalk.green
+            prefixTheme: Prompt.chalk.grey
         });
         prompt.ask('', function (err, res) {
             if (err)
                 return console.error(err);
-            new core_1["default"]().text(res);
+            process.stdout.write(Chalk.grey('Output: '));
+            new core_1["default"]().text(res, function () { });
             _this.input();
         });
     };
@@ -40,12 +42,26 @@ var CLI = /** @class */ (function () {
                     throw new Error('File specified does not exist!');
                 if (_this.arguments.filter(function (x) { return ['--watch', '-watch', '--w', '-w'].includes(x); }).length > 0) {
                     var listener = Chokidar.watch(PATH.join(_this.folder, PATH.dirname(input_1)), {});
+                    var date = new Date();
+                    console.log('[' + Chalk.grey(date.getHours() + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript watch mode started on ' + Chalk.grey(PATH.basename(input_1)) + '.');
                     listener.on('change', function (path) {
-                        new core_1["default"]().file(path);
+                        var date = new Date();
+                        console.log('[' + Chalk.grey(Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours())) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution started in watch mode...');
+                        process.stdout.write(Chalk.grey('Output: '));
+                        new core_1["default"]().file(path, function () {
+                            var date = new Date();
+                            console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution finished.\n');
+                        });
                     });
                 }
                 else {
-                    new core_1["default"]().file(PATH.join(_this.folder, input_1));
+                    var date = new Date();
+                    console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + date.getSeconds()) + '] Popscript execution started...');
+                    process.stdout.write(Chalk.grey('Output: '));
+                    new core_1["default"]().file(PATH.join(_this.folder, input_1), function () {
+                        var date = new Date();
+                        console.log('[' + Chalk.grey((date.getHours().toString().length === 1 ? ('0' + date.getHours().toString()) : date.getHours()) + ':' + (date.getMinutes().toString().length === 1 ? ('0' + date.getMinutes().toString()) : date.getMinutes()) + ':' + (date.getSeconds().toString().length === 1 ? ('0' + date.getSeconds().toString()) : date.getSeconds())) + '] Popscript execution finished.\n');
+                    });
                 }
             });
         }
