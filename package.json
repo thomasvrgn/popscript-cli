@@ -4,7 +4,13 @@
   "description": "🍿 Popscript CLI",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsc",
+    "build": "webpack --config webpack.config.js",
+    "start": "nodemon ./dist/build/popscript.js --ignore './example/'"
+  },
+  "bin": {
+    "popscript": "dist/index.js",
+    "pop": "dist/index.js"
   },
   "author": "NessMC",
   "license": "ISC",
