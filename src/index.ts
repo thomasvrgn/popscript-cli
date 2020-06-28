@@ -4,10 +4,11 @@
                 Main
 //////////////////////////////////*/
 
-import Popscript from '@popscript/core'
-import * as PATH from 'path'
-import * as FS   from 'fs'
+import Popscript     from '@popscript/core'
+import * as PATH     from 'path'
+import * as FS       from 'fs'
 import * as Chokidar from 'chokidar'
+import * as Prompt   from 'prompt-improved'
 
 export default class CLI {
 
@@ -15,6 +16,22 @@ export default class CLI {
     private readonly folder    : string        = process.cwd()
 
     constructor () {}
+
+    private input () {
+        
+        const prompt = new Prompt({
+            prefix: '>>>',
+            suffix: '',
+            prefixTheme: Prompt.chalk.green
+        })
+        
+        prompt.ask('', (err, res) => {
+            if (err) return console.error(err)
+            new Popscript().text(res)
+            this.input()
+        })
+
+    }
 
     public init () {
 
@@ -35,6 +52,10 @@ export default class CLI {
                 }
             })
             
+        } else if (this.arguments.length === 0) {
+
+            this.input()
+
         }
 
     }

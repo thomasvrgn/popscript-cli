@@ -9,11 +9,26 @@ var core_1 = require("@popscript/core");
 var PATH = require("path");
 var FS = require("fs");
 var Chokidar = require("chokidar");
+var Prompt = require("prompt-improved");
 var CLI = /** @class */ (function () {
     function CLI() {
         this.arguments = process.argv.slice(2);
         this.folder = process.cwd();
     }
+    CLI.prototype.input = function () {
+        var _this = this;
+        var prompt = new Prompt({
+            prefix: '>>>',
+            suffix: '',
+            prefixTheme: Prompt.chalk.green
+        });
+        prompt.ask('', function (err, res) {
+            if (err)
+                return console.error(err);
+            new core_1["default"]().text(res);
+            _this.input();
+        });
+    };
     CLI.prototype.init = function () {
         var _this = this;
         if (this.arguments.filter(function (x) { return ['--input', '-input', '-i', '--i'].includes(x); }).length > 0) {
@@ -33,6 +48,9 @@ var CLI = /** @class */ (function () {
                     new core_1["default"]().file(PATH.join(_this.folder, input_1));
                 }
             });
+        }
+        else if (this.arguments.length === 0) {
+            this.input();
         }
     };
     return CLI;
