@@ -4,9 +4,13 @@
                 Main
 //////////////////////////////////*/
 
-import * as PATH from 'path'
-import * as FS   from 'fs'
-import Message   from './lib/message'
+import Popscript     from '@popscript/core'
+import * as PATH     from 'path'
+import * as FS       from 'fs'
+import * as Chokidar from 'chokidar'
+import * as Prompt   from 'prompt-improved'
+import * as Chalk    from 'chalk'
+import Message       from './lib/message'
 
 export default class CLI {
 
@@ -15,31 +19,56 @@ export default class CLI {
 
     constructor () {}
 
+    private input () {
+        
+        const prompt = new Prompt({
+            prefix: '>>>',
+            suffix: '',
+            prefixTheme: Prompt.chalk.grey
+        })
+        
+        prompt.ask('', (err, res) => {
+            if (err) return console.error(err)
+            process.stdout.write('>' + Chalk.grey(' Output: '))
+            new Popscript().text(res, () => {})
+            this.input()
+        })
+
+    }
+
     public init () {
 
-        FS.exists(PATH.join(__dirname, 'commands'), (boolean: Boolean) => {
-            if (!boolean) return console.log(new Message('CLI commands folder does not exist!').format())
-            FS.readdir(PATH.join(__dirname, 'commands'), (error: Error, content: Array<string>) => {
-                if (error) throw error
-                content = content.map(x => PATH.join(__dirname, 'commands', x))
-                for (const index in this.arguments) {
-                    const argument = this.arguments[index]
-                    if (argument.match(/^(--|-)/g)) {
-                        const match = content.map(x => PATH.basename(x).replace('.js', '')).filter(x => x === argument.replace(/^(--|-)/g, ''))
-                        if (match) {
-                            import(PATH.join(__dirname, 'commands', match[0] + '.js')).then(value => {
-                                const command = new value.default({
-                                    value     : this.arguments[parseInt(index) + 1],
-                                    arguments : this.arguments
-                                })
-                                command.exec()
-                            })
-                        }
-                    }
+        if (this.arguments.filter(x => ['--input', '-input', '-i', '--i'].includes(x)).length > 0) {
+            const index = this.arguments.findIndex(x => ['--input', '-input', '-i', '--i'].includes(x)),
+                  input = this.arguments.slice(index + 1, index + 2).length > 0 ? this.arguments.slice(index + 1, index + 2)[0] : undefined
+            if (!input) return console.log(new Message('No files were specified.').format())
+            
+            FS.exists(PATH.join(this.folder, input), bool => {
+                if (!bool) return console.log(new Message('File specified does not exists.').format())
+                if (this.arguments.filter(x => ['--watch', '-watch', '--w', '-w'].includes(x)).length > 0) {
+                    const listener = Chokidar.watch(PATH.join(this.folder, PATH.dirname(input)), {})
+                    console.log(new Message('Popscript watch mode started on ' + Chalk.grey(PATH.basename(input)) + '.').format())
+                    listener.on('change', path => {
+                        console.log(new Message('Popscript execution started in watch mode...').format())
+                        process.stdout.write(Chalk.grey('Output: '))
+                        new Popscript().file(path, () => {
+                            console.log(new Message('Popscript execution finished.\n').format())
+                        })
+                    })
+                } else {
+                    console.log(new Message('Popscript execution started...').format())
+                    process.stdout.write('>' + Chalk.grey(' Output: '))
+                    new Popscript().file(PATH.join(this.folder, input), () => {
+                        console.log(new Message('Popscript execution finished.\n').format())
+                    })
                 }
-                
             })
-        })
+            
+        } else if (this.arguments.length === 0) {
+
+            this.input()
+
+        }
 
     }
 

@@ -5,43 +5,65 @@
                 Main
 //////////////////////////////////*/
 exports.__esModule = true;
+var core_1 = require("@popscript/core");
 var PATH = require("path");
 var FS = require("fs");
+var Chokidar = require("chokidar");
+var Prompt = require("prompt-improved");
+var Chalk = require("chalk");
 var message_1 = require("./lib/message");
 var CLI = /** @class */ (function () {
     function CLI() {
         this.arguments = process.argv.slice(2);
         this.folder = process.cwd();
     }
+    CLI.prototype.input = function () {
+        var _this = this;
+        var prompt = new Prompt({
+            prefix: '>>>',
+            suffix: '',
+            prefixTheme: Prompt.chalk.grey
+        });
+        prompt.ask('', function (err, res) {
+            if (err)
+                return console.error(err);
+            process.stdout.write('>' + Chalk.grey(' Output: '));
+            new core_1["default"]().text(res, function () { });
+            _this.input();
+        });
+    };
     CLI.prototype.init = function () {
         var _this = this;
-        FS.exists(PATH.join(__dirname, 'commands'), function (boolean) {
-            if (!boolean)
-                return console.log(new message_1["default"]('CLI commands folder does not exist!').format());
-            FS.readdir(PATH.join(__dirname, 'commands'), function (error, content) {
-                if (error)
-                    throw error;
-                content = content.map(function (x) { return PATH.join(__dirname, 'commands', x); });
-                var _loop_1 = function (index) {
-                    var argument = _this.arguments[index];
-                    if (argument.match(/^(--|-)/g)) {
-                        var match = content.map(function (x) { return PATH.basename(x).replace('.js', ''); }).filter(function (x) { return x === argument.replace(/^(--|-)/g, ''); });
-                        if (match) {
-                            Promise.resolve().then(function () { return require(PATH.join(__dirname, 'commands', match[0] + '.js')); }).then(function (value) {
-                                var command = new value["default"]({
-                                    value: _this.arguments[parseInt(index) + 1],
-                                    arguments: _this.arguments
-                                });
-                                command.exec();
-                            });
-                        }
-                    }
-                };
-                for (var index in _this.arguments) {
-                    _loop_1(index);
+        if (this.arguments.filter(function (x) { return ['--input', '-input', '-i', '--i'].includes(x); }).length > 0) {
+            var index = this.arguments.findIndex(function (x) { return ['--input', '-input', '-i', '--i'].includes(x); }), input_1 = this.arguments.slice(index + 1, index + 2).length > 0 ? this.arguments.slice(index + 1, index + 2)[0] : undefined;
+            if (!input_1)
+                return console.log(new message_1["default"]('No files were specified.').format());
+            FS.exists(PATH.join(this.folder, input_1), function (bool) {
+                if (!bool)
+                    return console.log(new message_1["default"]('File specified does not exists.').format());
+                if (_this.arguments.filter(function (x) { return ['--watch', '-watch', '--w', '-w'].includes(x); }).length > 0) {
+                    var listener = Chokidar.watch(PATH.join(_this.folder, PATH.dirname(input_1)), {});
+                    console.log(new message_1["default"]('Popscript watch mode started on ' + Chalk.grey(PATH.basename(input_1)) + '.').format());
+                    listener.on('change', function (path) {
+                        console.log(new message_1["default"]('Popscript execution started in watch mode...').format());
+                        process.stdout.write(Chalk.grey('Output: '));
+                        new core_1["default"]().file(path, function () {
+                            console.log(new message_1["default"]('Popscript execution finished.\n').format());
+                        });
+                    });
+                }
+                else {
+                    console.log(new message_1["default"]('Popscript execution started...').format());
+                    process.stdout.write('>' + Chalk.grey(' Output: '));
+                    new core_1["default"]().file(PATH.join(_this.folder, input_1), function () {
+                        console.log(new message_1["default"]('Popscript execution finished.\n').format());
+                    });
                 }
             });
-        });
+        }
+        else if (this.arguments.length === 0) {
+            this.input();
+        }
     };
     return CLI;
 }());
