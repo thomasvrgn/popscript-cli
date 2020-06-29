@@ -24,11 +24,11 @@ var CLI = /** @class */ (function () {
             suffix: '',
             prefixTheme: Prompt.chalk.grey
         });
-        prompt.ask('', function (err, res) {
-            if (err)
-                return console.error(err);
+        prompt.ask('', function (error, response) {
+            if (error)
+                return console.log(new message_1["default"](error).format());
             process.stdout.write('>' + Chalk.grey(' Output: '));
-            new core_1["default"]().text(res, function () { });
+            new core_1["default"]().text(response, function () { });
             _this.input();
         });
     };

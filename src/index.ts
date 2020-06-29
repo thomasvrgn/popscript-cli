@@ -22,15 +22,15 @@ export default class CLI {
     private input () {
         
         const prompt = new Prompt({
-            prefix: '>>>',
-            suffix: '',
-            prefixTheme: Prompt.chalk.grey
+            prefix      : '>>>',
+            suffix      : '',
+            prefixTheme : Prompt.chalk.grey
         })
         
-        prompt.ask('', (err, res) => {
-            if (err) return console.error(err)
+        prompt.ask('', (error, response) => {
+            if (error) return console.log(new Message(error).format())
             process.stdout.write('>' + Chalk.grey(' Output: '))
-            new Popscript().text(res, () => {})
+            new Popscript().text(response, () => {})
             this.input()
         })
 
@@ -39,28 +39,41 @@ export default class CLI {
     public init () {
 
         if (this.arguments.filter(x => ['--input', '-input', '-i', '--i'].includes(x)).length > 0) {
+
             const index = this.arguments.findIndex(x => ['--input', '-input', '-i', '--i'].includes(x)),
                   input = this.arguments.slice(index + 1, index + 2).length > 0 ? this.arguments.slice(index + 1, index + 2)[0] : undefined
+            
             if (!input) return console.log(new Message('No files were specified.').format())
             
             FS.exists(PATH.join(this.folder, input), bool => {
+
                 if (!bool) return console.log(new Message('File specified does not exists.').format())
+
                 if (this.arguments.filter(x => ['--watch', '-watch', '--w', '-w'].includes(x)).length > 0) {
+
                     const listener = Chokidar.watch(PATH.join(this.folder, PATH.dirname(input)), {})
+
                     console.log(new Message('Popscript watch mode started on ' + Chalk.grey(PATH.basename(input)) + '.').format())
+
                     listener.on('change', path => {
                         console.log(new Message('Popscript execution started in watch mode...').format())
                         process.stdout.write(Chalk.grey('Output: '))
+
                         new Popscript().file(path, () => {
                             console.log(new Message('Popscript execution finished.\n').format())
                         })
+
                     })
+
                 } else {
+
                     console.log(new Message('Popscript execution started...').format())
                     process.stdout.write('>' + Chalk.grey(' Output: '))
+
                     new Popscript().file(PATH.join(this.folder, input), () => {
                         console.log(new Message('Popscript execution finished.\n').format())
                     })
+
                 }
             })
             
